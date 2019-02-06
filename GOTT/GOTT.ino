@@ -1,3 +1,8 @@
+// This script is only used be the god alpaca which has the job to send its gps position to the master
+// To use the script the arduino needs to have a gps chip
+// The script works on the same principle as the normal slave/alpaca script
+// The master sends a data request to every specified client adress and the adressed slave/alpaca answers with its measured data
+// In this case the god sends back its gps position
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <RHReliableDatagram.h>
@@ -15,8 +20,8 @@ SoftwareSerial ss(4, 3);
 #define LED 13
 #define SEALEVELPRESSURE_HPA (1013.25)
 #define RF95_FREQ 868.0
-#define CLIENT_ADDRESS 22
-#define SERVER_ADDRESS 0
+#define CLIENT_ADDRESS 22 // has to be changed if the client adress of the god should be changed
+#define SERVER_ADDRESS 0  // has to be changed if the server adress of the master is changed
 bool l=true;
 unsigned long delayTime;
 RH_RF95 driver;
@@ -30,7 +35,7 @@ RHReliableDatagram manager(driver, CLIENT_ADDRESS);
 void setup()
 {
   Serial.begin(4800);
-  ss.begin(9600);
+  ss.begin(9600); // software serial of the gps chip
   
   Serial.print("Simple TinyGPS library v. "); Serial.println(TinyGPS::library_version());
   Serial.println("by Mikal Hart");
@@ -54,6 +59,10 @@ float flat=22.22222, flon=22.22222;
 float ele = 0.99;
 int newgpsdata = 0;
 void loop()
+// main loop of the script
+// sizes of buffers need to be set at the beginning, gps datapacket buffer size is 45 for lat, lon, elevation and a flag if new data is present
+// if a data request from the master is available and the gps data is available datapackets with the gps coordinates is send to the master
+// incase no gps fix is achieved, error values are send to the master to differentiate between true and false values
 {
   uint8_t len = sizeof(buf);
   uint8_t from; // Server adress   
@@ -79,58 +88,17 @@ void loop()
   {
     if (manager.recvfromAckTimeout(buf, &len, 1000, &from))
     { 
-      if (newData)
-      {
-        
-        //Serial.println("LAT=");
-        //Serial.println(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 6);
-        //Serial.println(" LON=");
-        //Serial.println(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 6);
-        //Serial.print(" SAT=");
-        //Serial.print(gps.satellites() == TinyGPS::GPS_INVALID_SATELLITES ? 0 : gps.satellites());
-        //Serial.print(" PREC=");
-        //Serial.print(gps.hdop() == TinyGPS::GPS_INVALID_HDOP ? 0 : gps.hdop());
-      }
-  
-        //gps.stats(&chars, &sentences, &failed);
-        //Serial.print(" CHARS=");
-        //Serial.print(chars);
-        //Serial.print(" SENTENCES=");
-        //Serial.print(sentences);
-        //Serial.print(" CSUM ERR=");
-        //Serial.println(failed);
-      //if (chars == 0)
-        //Serial.println("** No characters received from GPS: check wiring **");
-      //delay(500);
-      //Serial.println((char*)buf);
-      //Serial.print("Got measurement request from ");
-      //Serial.println(from, DEC);
-      //Serial.println("Measuring now and preparing packet");
         unsigned long age;
         ele = gps.f_altitude();
         gps.f_get_position(&flat, &flon, &age);
-        //Serial.println(flat);
-        //Serial.println(flon);
-        //Serial.println(ele);
         newgpsdata = 1;
         itoa(int(newgpsdata),datapacket,10);
         ltoa(long(flat*100000), datapacket+1,10);
         ltoa(long((flon)*100000), datapacket+8,10);
         ltoa(long((ele+1000)*100), datapacket+15,10);    
-      //Serial.println(flat);
-      //Serial.println(flon);
-      //Serial.println(bme.readTemperature()*100);
-      //Serial.println(bme.readHumidity()*100);
-      //Serial.println(datapacket);      
-      //Serial.println(bme.readPressure()*100);
-      //delay(500);
       if (manager.sendtoWait((uint8_t *)datapacket, sizeof(datapacket), from))
       {
       digitalWrite(LED, HIGH);
-      //Serial.print("Send ");
-      //Serial.println((char*)datapacket);
-      //Serial.print("to ");
-      //Serial.println(from, HEX);
       digitalWrite(LED, LOW);
       }
     } 
