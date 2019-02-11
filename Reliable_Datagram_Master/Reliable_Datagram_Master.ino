@@ -45,10 +45,11 @@ void setup()
   // the CAD timeout to non-zero:
 //  driver.setCADTimeout(10000);
 }
-int nnodes = 11; // number of used slaves/alpacas
 unsigned long packetnum = 0;  // packet counter, we increment per xmission
-uint8_t slaves[13] = { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21}; // Array of all client adresses of the arduinos
-//client adress of god is 22
+uint8_t gott = 22; // Client adress of god
+uint8_t slaves[2] = { 13,gott}; // Array of all client adresses of the arduinos (remove gott if you have no gps device)
+// ------------------------------------------------------------------------------
+int nnodes = sizeof(slaves)/sizeof(uint8_t); // number of used slaves/alpacas
 uint8_t broadcast[] = "Measurement Request";
 uint8_t datarequest[] = "Data Request";
 // Dont put this on the stack:
@@ -78,7 +79,7 @@ void loop()
         //{
       Serial.println((char*)datarequest);
         //}
-      if (from == 22) // client adress of god 
+      if (from == gott) // client adress of god 
       {
         if (manager.recvfromAckTimeout(gottbufgps, &gottlengps, 500, &from))
         {

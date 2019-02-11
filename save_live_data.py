@@ -36,8 +36,8 @@ import pickle
 
 ##### Parameters ##################
 experiment_name = 'Test'
-usb_port = '/dev/cu.wchusbserial1420'
-instruments = np.array([1,2,3,4,5,6,7,8,9,10,11])
+usb_port = '/dev/cu.wchusbserial1410'
+instruments = np.array([3]) # Instruments WITHOUT GPS
 verbose = True
 ###################################
 
